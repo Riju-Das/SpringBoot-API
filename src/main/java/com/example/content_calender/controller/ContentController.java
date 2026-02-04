@@ -1,21 +1,22 @@
 package com.example.content_calender.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import com.example.content_calender.model.Content;
 import com.example.content_calender.repository.ContentCollectionRepository;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PathVariable;
 
 
 
 @RestController
 @RequestMapping("/api/content")
+@CrossOrigin
 public class ContentController {
 
     private final ContentCollectionRepository repository;
@@ -36,23 +37,30 @@ public class ContentController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("")
-    public void create(@RequestBody Content content){
-        repository.save(content);
+    public Content create(@Valid @RequestBody Content content){
+        content.setDateCreated(LocalDateTime.now());
+        content.setDateUpdated(LocalDateTime.now());
+        return repository.save(content);
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/{id}")
-    public void update(@RequestBody Content content, @PathVariable Integer id){
-        if(!repository.ExistsById(id)){
+    public Content update(@RequestBody Content content, @PathVariable Integer id){
+        if(!repository.existsById(id)){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Content not found");
         }
-        repository.save(content);
+        content.setId(id);
+        content.setDateUpdated((LocalDateTime.now()));
+        return repository.save(content);
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id){
-        repository.delete(id);
+        if(!repository.existsById(id)){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found");
+        }        
+        repository.deleteById(id);
     }
     
     
