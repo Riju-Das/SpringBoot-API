@@ -90,6 +90,10 @@ public class ContentController {
         }
         return results;
     }
+    @GetMapping("/login")
+    public String LoginPage(){
+        return "hello";
+    }
     
     
     
