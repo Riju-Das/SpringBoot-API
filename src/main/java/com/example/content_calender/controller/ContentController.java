@@ -1,5 +1,12 @@
 package com.example.content_calender.controller;
 
+import com.example.content_calender.dto.ContentResponseDto;
+import com.example.content_calender.model.User;
+import com.example.content_calender.repository.UserRepository;
+import com.example.content_calender.service.ContentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -21,80 +28,66 @@ import com.example.content_calender.model.Status;
 
 @RestController
 @RequestMapping("/api/content")
+@RequiredArgsConstructor
 @CrossOrigin
 public class ContentController {
 
     private final ContentCollectionRepository repository;
-
-    public ContentController(ContentCollectionRepository repository){
-        this.repository = repository;
-    }
+    private final UserRepository userRepository;
+    private final ContentService contentService;
 
     @GetMapping("")
-    public List<Content> findAll(){
-        return repository.findAll();
+    public ResponseEntity<List<ContentResponseDto>> findAll(Authentication authentication){
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return ResponseEntity.ok(contentService.findContentByUser(user));
     }
 
     @GetMapping("/{id}")
-    public Content getMethodName(@PathVariable Integer id) {
-        return repository.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND , "Content Not Found"));
+    public ResponseEntity<ContentResponseDto> findContentById(@PathVariable Integer id,Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return ResponseEntity.ok(contentService.findContentById(user,id));
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("")
-    public Content create(@Valid @RequestBody Content content){
-        content.setDateCreated(LocalDateTime.now());
-        content.setDateUpdated(LocalDateTime.now());
-        return repository.save(content);
+    public ResponseEntity<ContentResponseDto> create(@Valid @RequestBody ContentResponseDto content, Authentication authentication){
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return ResponseEntity.status(HttpStatus.CREATED).body(contentService.createContent(content ,user));
 
     }
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/{id}")
-    public Content update(@RequestBody Content content, @PathVariable Integer id){
-        if(!repository.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Content not found");
-        }
-        content.setId(id);
-        content.setDateUpdated((LocalDateTime.now()));
-        return repository.save(content);
+    public ResponseEntity<ContentResponseDto> update(@RequestBody ContentResponseDto content, @PathVariable Integer id, Authentication authentication){
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return ResponseEntity.ok(contentService.updateContent(content,id,user));
     }
 
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id){
-        if(!repository.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found");
-        }        
-        repository.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable Integer id, Authentication authentication){
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        contentService.deleteContent(id,user);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 
-    @GetMapping("/filter/{keyword}")
-    public List<Content> findTitleByKeyword(@PathVariable String keyword) {
+    @GetMapping("/filter/keyword/{keyword}")
+    public ResponseEntity<List<ContentResponseDto>> findTitleByKeyword(@PathVariable String keyword, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
 
-        List<Content> results = repository.findByTitleContainingIgnoreCase(keyword);
-
-        if(results.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content Not Found");
-        }
-        
-        return results;
+        return ResponseEntity.ok(contentService.findTitleByKeyword(keyword,user));
     }
     
     @GetMapping("/filter/status/{status}")
-    public List<Content> getMethodName(@PathVariable Status status) {
-        List<Content> results = repository.findByStatus(status);
-        if(results.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Content now found");
-        }
-        return results;
+    public ResponseEntity<List<ContentResponseDto>> getContentByStatus(@PathVariable Status status, Authentication authentication) {
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return ResponseEntity.ok(contentService.getContentByStatus(status, user));
     }
-    @GetMapping("/login")
-    public String LoginPage(){
-        return "hello";
-    }
-    
-    
     
 }

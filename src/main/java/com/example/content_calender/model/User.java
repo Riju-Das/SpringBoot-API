@@ -24,6 +24,9 @@ public class User implements UserDetails {
     @JoinColumn(unique = true)
     private String username;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Content> content;
+
     private String password;
 
     @Override
