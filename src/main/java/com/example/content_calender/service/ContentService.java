@@ -6,6 +6,10 @@ import com.example.content_calender.model.Status;
 import com.example.content_calender.model.User;
 import com.example.content_calender.repository.ContentCollectionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,13 +25,14 @@ public class ContentService {
 
 
 
-
+    @Cacheable(cacheNames = "contents", key = "#user.id")
     public List<ContentResponseDto> findContentByUser(User user) {
         return  contentCollectionRepository.findByUser(user).stream()
                 .map(ContentResponseDto::from)
                 .toList();
     }
 
+    @Cacheable(cacheNames = "content", key = "#id")
     public ContentResponseDto findContentById(User user, Integer id) {
         Content contentres = contentCollectionRepository.findById(id)
                 .filter(content -> content.getUser().equals(user))
@@ -35,6 +40,7 @@ public class ContentService {
         return ContentResponseDto.from(contentres);
     }
 
+    @CacheEvict(value = "contents", key = "#user.id")
     public ContentResponseDto createContent(ContentResponseDto contentdto, User user) {
         Content content = new Content();
         content.setTitle(contentdto.getTitle());
@@ -47,6 +53,10 @@ public class ContentService {
         return ContentResponseDto.from(contentCollectionRepository.save(content));
     }
 
+    @Caching(
+            evict = @CacheEvict(value = "contents", key= "#user.id"),
+            put = @CachePut(value = "content",key= "#id")
+    )
     public ContentResponseDto updateContent(ContentResponseDto content, Integer id, User user) {
         Content existingContent = contentCollectionRepository.findById(id)
                 .filter(c -> c.getUser().equals(user))
@@ -60,12 +70,20 @@ public class ContentService {
         return ContentResponseDto.from(contentCollectionRepository.save(existingContent));
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "contents", key = "#user.id"),
+                    @CacheEvict(value = "content", key = "#id")
+            }
+    )
     public void deleteContent(Integer id, User user) {
         Content existingContent = contentCollectionRepository.findById(id)
                 .filter(c -> c.getUser().equals(user))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found"));
         contentCollectionRepository.delete(existingContent);
     }
+
+
     public List<ContentResponseDto> findTitleByKeyword(String keyword, User user) {
         return contentCollectionRepository.findByTitleContainingIgnoreCaseAndUser(keyword,user).stream()
                 .map(ContentResponseDto::from)
