@@ -1,8 +1,7 @@
 package com.example.content_calender.security;
 
-import com.example.content_calender.dto.LoginRequestDto;
-import com.example.content_calender.dto.LoginResponseDto;
-import com.example.content_calender.dto.SignupResponseDto;
+import com.example.content_calender.dto.*;
+import com.example.content_calender.model.RefreshToken;
 import com.example.content_calender.model.User;
 import com.example.content_calender.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,7 @@ public class AuthService {
     private final AuthUtil authUtil;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
 
     public LoginResponseDto login(LoginRequestDto loginRequestDto) {
@@ -30,8 +30,11 @@ public class AuthService {
 
         String token = authUtil.generateAccessToken(user);
 
-        return new LoginResponseDto(token , user.getId());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return new LoginResponseDto(token , refreshToken.getToken() ,user.getId());
     }
+
     public SignupResponseDto signup(LoginRequestDto signupRequestDto) {
         User user = userRepository.findByUsername(signupRequestDto.getUsername()).orElse(null);
         if(user!=null) throw new IllegalArgumentException("User already exists");
@@ -45,5 +48,15 @@ public class AuthService {
         return new SignupResponseDto(user.getId(),user.getUsername());
 
 
+    }
+
+    public String refresh(String requestRefreshToken){
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshToken -> {
+                    User user = userRepository.findById(refreshToken.getUserId())
+                            .orElseThrow();
+                    return authUtil.generateAccessToken(user);
+                })
+                        .orElseThrow(() -> new RuntimeException("Refresh token is invalid or expired. Please sign in again."));
     }
 }

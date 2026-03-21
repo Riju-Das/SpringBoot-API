@@ -1,5 +1,6 @@
 package com.example.content_calender.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class LoginResponseDto {
-    String jwt;
-    Long userId;
+    private String jwt;
+
+    @JsonIgnore
+    private String refreshToken;
+
+    private Long userId;
 }

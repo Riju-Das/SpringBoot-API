@@ -30,21 +30,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String requestTokenHeader = request.getHeader("Authorization");
 
-        if(requestTokenHeader==null || !requestTokenHeader.startsWith("Bearer")){
+        if(requestTokenHeader==null || !requestTokenHeader.startsWith("Bearer ")){
             filterChain.doFilter(request,response);
+            return;
         }
 
-        String token = requestTokenHeader.split("Bearer ")[1];
+        String token = requestTokenHeader.substring(7);
 
-        String username = authUtil.getUsernameFromToken(token);
+        if(token.isBlank()){
+            filterChain.doFilter(request,response);
+            return;
+        }
 
-        if(username!=null && SecurityContextHolder.getContext().getAuthentication()==null){
+        if(authUtil.ValidateAccessToken(token)){
+            String username = authUtil.getUsernameFromToken(token);
 
-            User user = userRepository.findByUsername(username).orElseThrow();
+            if(username!=null && SecurityContextHolder.getContext().getAuthentication()==null){
 
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user,null,user.getAuthorities());
+                User user = userRepository.findByUsername(username).orElseThrow();
 
-            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user,null,user.getAuthorities());
+
+                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+            }
 
         }
 

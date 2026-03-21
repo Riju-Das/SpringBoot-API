@@ -1,0 +1,10 @@
+package com.example.content_calender.repository;
+
+import com.example.content_calender.model.RefreshToken;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface RefreshTokenRepository extends CrudRepository<RefreshToken , String> {
+    void deleteByUserId(Long userId);
+}

@@ -23,7 +23,7 @@ public class User implements UserDetails,Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JoinColumn(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

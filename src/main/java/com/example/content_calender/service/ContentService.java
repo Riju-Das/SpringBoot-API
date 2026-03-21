@@ -32,7 +32,7 @@ public class ContentService {
                 .toList();
     }
 
-    @Cacheable(cacheNames = "content", key = "#id")
+    @Cacheable(cacheNames = "content", key = "#user.id + ':' + #id")
     public ContentResponseDto findContentById(User user, Integer id) {
         Content contentres = contentCollectionRepository.findById(id)
                 .filter(content -> content.getUser().equals(user))
@@ -55,7 +55,7 @@ public class ContentService {
 
     @Caching(
             evict = @CacheEvict(value = "contents", key= "#user.id"),
-            put = @CachePut(value = "content",key= "#id")
+            put = @CachePut(value = "content",key= "#user.id + ':' + #id")
     )
     public ContentResponseDto updateContent(ContentResponseDto content, Integer id, User user) {
         Content existingContent = contentCollectionRepository.findById(id)
@@ -73,7 +73,7 @@ public class ContentService {
     @Caching(
             evict = {
                     @CacheEvict(value = "contents", key = "#user.id"),
-                    @CacheEvict(value = "content", key = "#id")
+                    @CacheEvict(value = "content", key = "#user.id + ':' + #id")
             }
     )
     public void deleteContent(Integer id, User user) {

@@ -49,7 +49,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             String key =  ip + "-auth";
             bucket = getBucket(key,authLimit);
         }
-        else if(path.startsWith("api/content")){
+        else if(path.startsWith("/api/content")){
             String key = ip + "-general";
             bucket = getBucket(key,generalLimit);
         }
