@@ -2,6 +2,7 @@ package com.example.content_calender.security;
 
 import com.example.content_calender.dto.*;
 import com.example.content_calender.model.RefreshToken;
+import com.example.content_calender.model.Role;
 import com.example.content_calender.model.User;
 import com.example.content_calender.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -36,12 +39,18 @@ public class AuthService {
     }
 
     public SignupResponseDto signup(LoginRequestDto signupRequestDto) {
+
+        if(signupRequestDto.getUsername()==null || signupRequestDto.getPassword()==null || signupRequestDto.getUsername().isBlank() || signupRequestDto.getPassword().isBlank()){
+            throw new IllegalArgumentException("Username and password are required");
+        }
+
         User user = userRepository.findByUsername(signupRequestDto.getUsername()).orElse(null);
         if(user!=null) throw new IllegalArgumentException("User already exists");
 
         user = userRepository.save(User.builder()
                 .username(signupRequestDto.getUsername())
                 .password(passwordEncoder.encode(signupRequestDto.getPassword()))
+                .roles(Set.of(Role.USER))
                 .build()
         );
 

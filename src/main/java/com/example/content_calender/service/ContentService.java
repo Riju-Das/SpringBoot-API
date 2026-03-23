@@ -10,6 +10,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,11 +27,11 @@ public class ContentService {
 
 
 
-    @Cacheable(cacheNames = "contents", key = "#user.id")
-    public List<ContentResponseDto> findContentByUser(User user) {
-        return  contentCollectionRepository.findByUser(user).stream()
-                .map(ContentResponseDto::from)
-                .toList();
+    @Cacheable(cacheNames = "contents", key = "#user.id + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort.toString()")
+    public Page<ContentResponseDto> findContentByUser(User user, Pageable pageable) {
+        return  contentCollectionRepository.findByUser(user, pageable)
+                .map(ContentResponseDto::from);
+
     }
 
     @Cacheable(cacheNames = "content", key = "#user.id + ':' + #id")
@@ -40,7 +42,7 @@ public class ContentService {
         return ContentResponseDto.from(contentres);
     }
 
-    @CacheEvict(value = "contents", key = "#user.id")
+    @CacheEvict(value = "contents", allEntries = true)
     public ContentResponseDto createContent(ContentResponseDto contentdto, User user) {
         Content content = new Content();
         content.setTitle(contentdto.getTitle());
@@ -54,7 +56,7 @@ public class ContentService {
     }
 
     @Caching(
-            evict = @CacheEvict(value = "contents", key= "#user.id"),
+            evict = @CacheEvict(value = "contents", allEntries = true),
             put = @CachePut(value = "content",key= "#user.id + ':' + #id")
     )
     public ContentResponseDto updateContent(ContentResponseDto content, Integer id, User user) {
@@ -72,7 +74,7 @@ public class ContentService {
 
     @Caching(
             evict = {
-                    @CacheEvict(value = "contents", key = "#user.id"),
+                    @CacheEvict(value = "contents", allEntries = true),
                     @CacheEvict(value = "content", key = "#user.id + ':' + #id")
             }
     )
@@ -84,15 +86,13 @@ public class ContentService {
     }
 
 
-    public List<ContentResponseDto> findTitleByKeyword(String keyword, User user) {
-        return contentCollectionRepository.findByTitleContainingIgnoreCaseAndUser(keyword,user).stream()
-                .map(ContentResponseDto::from)
-                .toList();
+    public Page<ContentResponseDto> findTitleByKeyword(String keyword, User user, Pageable pageable) {
+        return contentCollectionRepository.findByTitleContainingIgnoreCaseAndUser(keyword,user, pageable)
+                .map(ContentResponseDto::from);
     }
 
-    public List<ContentResponseDto> getContentByStatus(Status status, User user) {
-        return contentCollectionRepository.findByStatusAndUser(status,user).stream()
-                .map(ContentResponseDto::from)
-                .toList();
+    public Page<ContentResponseDto> getContentByStatus(Status status, User user, Pageable pageable) {
+        return contentCollectionRepository.findByStatusAndUser(status,user, pageable)
+                .map(ContentResponseDto::from);
     }
 }

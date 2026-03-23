@@ -5,6 +5,10 @@ import com.example.content_calender.model.User;
 import com.example.content_calender.repository.UserRepository;
 import com.example.content_calender.service.ContentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,11 +40,25 @@ public class ContentController {
     private final UserRepository userRepository;
     private final ContentService contentService;
 
+    private Pageable buildPageable(int page, int size , String sortBy , String direction){
+        Sort sort = direction.equalsIgnoreCase("asc")
+                ?Sort.by(sortBy).ascending()
+                :Sort.by(sortBy).descending();
+        return PageRequest.of(page,size,sort);
+    }
+
     @GetMapping("")
-    public ResponseEntity<List<ContentResponseDto>> findAll(Authentication authentication){
+    public ResponseEntity<Page<ContentResponseDto>> findAll(
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "dateCreated") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+    ){
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
-        return ResponseEntity.ok(contentService.findContentByUser(user));
+        Pageable pageable = buildPageable(page,size,sortBy,direction);
+        return ResponseEntity.ok(contentService.findContentByUser(user,pageable));
     }
 
     @GetMapping("/{id}")
@@ -76,18 +94,34 @@ public class ContentController {
 
 
     @GetMapping("/filter/keyword/{keyword}")
-    public ResponseEntity<List<ContentResponseDto>> findTitleByKeyword(@PathVariable String keyword, Authentication authentication) {
+    public ResponseEntity<Page<ContentResponseDto>> findTitleByKeyword(
+            @PathVariable String keyword,
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "dateCreated") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+            ) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
-
-        return ResponseEntity.ok(contentService.findTitleByKeyword(keyword,user));
+        Pageable pageable = buildPageable(page,size,sortBy,direction);
+        return ResponseEntity.ok(contentService.findTitleByKeyword(keyword,user, pageable));
     }
     
     @GetMapping("/filter/status/{status}")
-    public ResponseEntity<List<ContentResponseDto>> getContentByStatus(@PathVariable Status status, Authentication authentication) {
+    public ResponseEntity<Page<ContentResponseDto>> getContentByStatus(
+            @PathVariable Status status,
+            Authentication authentication,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "dateCreated") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
+
+    ) {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
-        return ResponseEntity.ok(contentService.getContentByStatus(status, user));
+        Pageable pageable = buildPageable(page,size,sortBy,direction);
+        return ResponseEntity.ok(contentService.getContentByStatus(status, user,pageable));
     }
     
 }
