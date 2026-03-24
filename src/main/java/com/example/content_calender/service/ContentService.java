@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +38,7 @@ public class ContentService {
     @Cacheable(cacheNames = "content", key = "#user.id + ':' + #id")
     public ContentResponseDto findContentById(User user, Integer id) {
         Content contentres = contentCollectionRepository.findById(id)
-                .filter(content -> content.getUser().equals(user))
+                .filter(content -> Objects.equals(content.getUser().getId(), user.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found"));
         return ContentResponseDto.from(contentres);
     }
@@ -61,7 +62,7 @@ public class ContentService {
     )
     public ContentResponseDto updateContent(ContentResponseDto content, Integer id, User user) {
         Content existingContent = contentCollectionRepository.findById(id)
-                .filter(c -> c.getUser().equals(user))
+                .filter(c -> Objects.equals(c.getUser().getId(), user.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found"));
         existingContent.setTitle(content.getTitle());
         existingContent.setDesc(content.getDescription());
@@ -80,7 +81,7 @@ public class ContentService {
     )
     public void deleteContent(Integer id, User user) {
         Content existingContent = contentCollectionRepository.findById(id)
-                .filter(c -> c.getUser().equals(user))
+                .filter(content -> Objects.equals(content.getUser().getId(), user.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content not found"));
         contentCollectionRepository.delete(existingContent);
     }

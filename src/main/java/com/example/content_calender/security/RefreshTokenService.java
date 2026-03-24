@@ -20,6 +20,7 @@ public class RefreshTokenService {
 
     public RefreshToken createRefreshToken(Long userId){
 
+        refreshTokenRepository.deleteByUserId(userId);
         Long expirationInSeconds = refreshTokenDurationMs / 1000;
 
         RefreshToken refreshToken = RefreshToken.builder()
