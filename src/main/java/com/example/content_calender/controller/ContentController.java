@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ import com.example.content_calender.model.Status;
 @RequestMapping("/api/content")
 @RequiredArgsConstructor
 @CrossOrigin
+@Validated
 public class ContentController {
 
     private final ContentCollectionRepository repository;

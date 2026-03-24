@@ -6,6 +6,7 @@ import com.example.content_calender.dto.SignupResponseDto;
 import com.example.content_calender.dto.TokenRefreshResponseDto;
 import com.example.content_calender.security.AuthService;
 import com.example.content_calender.security.RefreshTokenService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<LoginResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         LoginResponseDto responseDto = authService.login(loginRequestDto);
         ResponseCookie springCookie = ResponseCookie.from("refreshToken", responseDto.getRefreshToken())
                 .httpOnly(true)
@@ -48,7 +49,7 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<SignupResponseDto> signup(@RequestBody LoginRequestDto signupRequestDto){
+    public ResponseEntity<SignupResponseDto> signup(@Valid @RequestBody LoginRequestDto signupRequestDto){
         return ResponseEntity.ok(authService.signup(signupRequestDto));
     }
 
